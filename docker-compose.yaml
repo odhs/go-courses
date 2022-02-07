@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  app:
+    build: .
+    volumes:
+      - .:/go/src/
+
+  mysql:
+    image: mysql:5.7
+    volumes:
+      - ./.docker/dbdata:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=db_cursos
+      - MYSQL_ROOT_PASSWORD=root 
+
+  zookeeper:
+    image:  conflentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:latest 
+    depends_on:
+      - zookeeper
+    ports:
+      - 9092:9092
+      - 9094:9094
+    environment:
+        KAFKA_BROKER_TO: 1
+        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+        KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+        KAFKA_LISTENERS: INTERNAL://:9892,OUTSIDE://9894
+        KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9892,OUTSIDE://host.docker.internal
+        KAFKA_LISTENER_SECURITY_PROCTOCOL_MAP: INTERNAL:PLAINTEXT,OUTSIDE:PLAINTEXT
+    extra_hosts:
+        - "host.docker.internal:172.17.8.1"
+
+
